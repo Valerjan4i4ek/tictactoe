@@ -2,7 +2,7 @@ package test.tictactoe;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class Game {
@@ -18,37 +18,60 @@ public class Game {
     }
 
     void game(String playerX, String player0) {
+        String result = "";
         initTable();
         printTable();
         while (true) {
             turnX();
             if (checkWin(SIGN_X)) {
-                System.out.println("КРЕСТИКИ ПОБЕДИЛИ!");
+                result = "CROSSES WON";
+                System.out.println(result);
                 break;
             }
             if (isTableFull()) {
-                System.out.println("СОРЯНЧИК, НИЧЬЯ!");
+                result = "DRAW";
+                System.out.println(result);
                 break;
             }
             turnO();
             printTable();
             if (checkWin(SIGN_O)) {
-                System.out.println("НООЛИКИ ПОБЕДИЛИ!");
+                result = "ZEROS WON";
+                System.out.println(result);
                 break;
             }
             if (isTableFull()) {
-                System.out.println("СОРЯНЧИК, НИЧЬЯ!");
+                result = "DRAW";
+                System.out.println(result);
                 break;
             }
         }
         System.out.println("GAME OVER.");
-        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("tictactoe.txt"))) {
-            History history = new History(playerX, player0, table);
-            oos.writeObject(history);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         printTable();
+
+        String final_table = "";
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++)
+                final_table += table[row][col] + " ";
+            final_table += "\n";
+        }
+
+        try (FileOutputStream fos=new FileOutputStream("notes.txt", true)) {
+            byte[] buffer = final_table.getBytes();
+            fos.write(buffer, 0, buffer.length);
+            byte[] x = playerX.getBytes();
+            fos.write(x, 0, x.length);
+            fos.write("\t".getBytes());
+            byte[] o = player0.getBytes();
+            fos.write(o, 0, o.length);
+            fos.write("\n".getBytes());
+            byte[] res = result.getBytes(StandardCharsets.UTF_8);
+            fos.write(res, 0, res.length);
+            fos.write("\n".getBytes());
+        }
+        catch(IOException ex){
+            System.out.println(ex.getMessage());
+        }
 
     }
 
@@ -69,8 +92,8 @@ public class Game {
     void turnX() {
         int x, y;
         do {
-            System.out.println("ХОД КРЕСТИКОВ!");
-            System.out.println("Введите кординаты Х и Y (1, 2 или 3 для каждого):");
+            System.out.println("CROSSES RUN");
+            System.out.println("Enter coordinates Х or Y (1, 2 or 3 for each):");
             x = scanner.nextInt() - 1;
             y = scanner.nextInt() - 1;
         } while (!isCellValid(x, y));
@@ -80,8 +103,8 @@ public class Game {
     void turnO() {
         int x, y;
         do {
-            System.out.println("ХОД НОЛИКОВ!");
-            System.out.println("Введите кординаты Х и Y (1, 2 или 3 для каждого):");
+            System.out.println("ZEROS RUN");
+            System.out.println("Enter coordinates Х or Y (1, 2 or 3 for each):");
             x = scanner.nextInt() - 1;
             y = scanner.nextInt() - 1;
         } while (!isCellValid(x, y));
@@ -90,7 +113,7 @@ public class Game {
 
     boolean isCellValid(int x, int y) {
         if (x < 0 || y < 0 || x >= 3|| y >= 3){
-            System.out.println("ДАННОЕ ПОЛЕ УЖЕ ЗАПОЛНЕНО ИЛИ ЕГО ПОПРОСТУ НЕТ");
+            System.out.println("THIS FIELD IS BUSY OR DO NOT EXIST");
             return false;
         }
         return table[y][x] == SIGN_EMPTY;
